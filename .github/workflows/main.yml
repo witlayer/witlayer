@@ -1,0 +1,49 @@
+name: Ultimate-1D-Counter-No Script
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      
+      # -----------------------------------------------------------
+      # خطوة 1: تثبيت المتطلبات الأساسية
+      # -----------------------------------------------------------
+      - name: Install Prerequisites (Chrome, CRD, VBox)
+        shell: pwsh
+        run: |
+          Write-Host "⬇️ Downloading Chrome..."
+          Invoke-WebRequest -Uri "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile "chrome_installer.exe"
+          Start-Process -FilePath "chrome_installer.exe" -Args "/silent /install" -Wait
+          
+          Write-Host "⬇️ Downloading CRD Host..."
+          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
+          Start-Process -FilePath "msiexec.exe" -Args "/i crd.msi /quiet /qn" -Wait
+
+
+      # -----------------------------------------------------------
+      # خطوة 3: تفعيل الريموت ديسكتوب
+      # -----------------------------------------------------------
+      - name: Start Chrome Remote Desktop
+        shell: pwsh
+        env:
+          CRD_CODE: ${{ secrets.CRD_CODE }}
+          CRD_PIN: ${{ secrets.CRD_PIN }}
+        run: |
+          $exePath = "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe"
+          $UniqueName = "${{ github.actor }}-Machine-${{ env.DEVICE_NUM }}"
+          
+          Write-Host "🚀 STARTING RDP SERVICE: $UniqueName"
+          & $exePath --code="$env:CRD_CODE" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name="$UniqueName" --pin=$env:CRD_PIN
+
+
+      # -----------------------------------------------------------
+      # خطوة 6: البقاء
+      # -----------------------------------------------------------
+      - name: Keep Alive
+        shell: pwsh
+        run: |
+          Write-Host "✅ Both VMs are running..."
+          while ($true) { Start-Sleep -Seconds 300 }
