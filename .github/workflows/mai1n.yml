@@ -1,11 +1,11 @@
-name: Ultimate-1D-Counter-Linux
+name: Ultimate-1D-Counter-Linux1
 
 on: 
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
 
       # -----------------------------------------------------------
