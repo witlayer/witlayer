@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
 
       # -----------------------------------------------------------
@@ -13,6 +13,8 @@ jobs:
       # -----------------------------------------------------------
       - name: Install System Control Tools
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cpulimit
 
       # -----------------------------------------------------------
       # خطوة 2: تثبيت Chrome و Chrome Remote Desktop
