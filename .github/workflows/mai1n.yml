@@ -13,7 +13,6 @@ jobs:
       # -----------------------------------------------------------
       - name: Install System Control Tools
         run: |
-          sudo apt-get install -y cpulimit
 
       # -----------------------------------------------------------
       # خطوة 2: تثبيت Chrome و Chrome Remote Desktop
