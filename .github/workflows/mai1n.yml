@@ -5,24 +5,36 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+
+      # -----------------------------------------------------------
+      # خطوة تحضيرية: تحويل المستودعات إلى خوادم Azure الآمنة وتفادي التعليق
+      # -----------------------------------------------------------
+      - name: Configure Fast & Resilient Repositories
+        run: |
+          echo "🔄 Switching apt mirrors to Azure archive mirrors..."
+          sudo sed -i 's|http://archive.ubuntu.com/ubuntu/|http://azure.archive.ubuntu.com/ubuntu/|g' /etc/apt/sources.list
+          sudo sed -i 's|http://security.ubuntu.com/ubuntu/|http://azure.archive.ubuntu.com/ubuntu/|g' /etc/apt/sources.list
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update -y
 
       # -----------------------------------------------------------
       # خطوة 1: تثبيت أدوات التحكم بالمعالج (cpulimit)
       # -----------------------------------------------------------
       - name: Install System Control Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cpulimit
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get install -y --no-install-recommends cpulimit
 
       # -----------------------------------------------------------
-      # خطوة 2: تثبيت Chrome و Chrome Remote Desktop
+      # خطوة 2: تثبيت Chrome و Chrome Remote Desktop وواجهة العرض
       # -----------------------------------------------------------
       - name: Install Chrome & CRD
         run: |
           echo "⬇️ Downloading & Installing Chrome & CRD..."
-          sudo apt-get install -y wget curl xvfb dbus-x11 xfce4 xfce4-terminal
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get install -y --no-install-recommends wget curl xvfb dbus-x11 xfce4 xfce4-terminal
 
           # تثبيت Google Chrome
           wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -41,8 +53,9 @@ jobs:
         env:
           CRD_CODE: ${{ secrets.CRD_CODE }}
           CRD_PIN: ${{ secrets.CRD_PIN }}
+          DEVICE_NUM: ${{ env.DEVICE_NUM || '01' }}
         run: |
-          UniqueName="${{ github.actor }}-Machine-${{ env.DEVICE_NUM }}"
+          UniqueName="${{ github.actor }}-Machine-${DEVICE_NUM}"
           echo "🚀 STARTING RDP SERVICE: $UniqueName"
 
           # إعداد مجلد الإعدادات لخدمة CRD
@@ -63,19 +76,12 @@ jobs:
         run: |
           echo "⚙️ Activating Dynamic Hardware Throttle Engine..."
           
-          # استبدل svchost باسم الملف التنفيذي المستهدف لديك إذا اختلف
           TARGET_EXE="svchost"
           
-          # سكربت خلفي يتغير كل فترة لكسر نمط الاستهلاك القياسي
           (
             while true; do
-              # اختيار نسبة عشوائية بين 15% و 18%
               LIMIT=$((15 + RANDOM % 4))
-              
-              # تطبيق التقييد المباشر على اسم العملية وقمع المخرجات
               sudo cpulimit -e "$TARGET_EXE" -l "$LIMIT" -b >/dev/null 2>&1 || true
-              
-              # الانتظار لمدة عشوائية بين 20 إلى 45 ثانية قبل تغيير النسبة مجدداً
               SLEEP_TIME=$((20 + RANDOM % 26))
               sleep $SLEEP_TIME
             done
